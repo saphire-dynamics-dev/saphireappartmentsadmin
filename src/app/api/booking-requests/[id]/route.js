@@ -121,3 +121,47 @@ export async function PATCH(request, { params }) {
     );
   }
 }
+
+export async function DELETE(request, { params }) {
+  try {
+    await dbConnect();
+    
+    const { id } = params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid booking request ID' },
+        { status: 400 }
+      );
+    }
+    
+    const bookingRequest = await BookingRequest.findById(id);
+    if (!bookingRequest) {
+      return NextResponse.json(
+        { success: false, error: 'Booking request not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Check if booking request can be deleted (only allow deletion of certain statuses)
+    if (bookingRequest.status === 'Converted') {
+      return NextResponse.json(
+        { success: false, error: 'Cannot delete a converted booking request' },
+        { status: 400 }
+      );
+    }
+    
+    await BookingRequest.findByIdAndDelete(id);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Booking request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting booking request:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete booking request' },
+      { status: 500 }
+    );
+  }
+}

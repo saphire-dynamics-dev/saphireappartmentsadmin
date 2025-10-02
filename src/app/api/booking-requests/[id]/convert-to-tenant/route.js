@@ -3,6 +3,8 @@ import dbConnect from '@/lib/mongodb';
 import BookingRequest from '@/models/BookingRequest';
 import Tenant from '@/models/Tenant';
 import Apartment from '@/models/Apartment';
+import Transaction from '@/models/Transaction';
+import AdminNotification from '@/models/AdminNotification';
 import mongoose from 'mongoose';
 
 export async function POST(request, { params }) {
@@ -105,11 +107,68 @@ export async function POST(request, { params }) {
     apartment.status = 'Occupied';
     await apartment.save();
     
+    // Create transaction entry for the booking payment
+    const transactionData = {
+      reference: Transaction.generateReference(),
+      amount: bookingRequest.bookingDetails.totalAmount * 100, // Convert to kobo (Paystack format)
+      currency: 'NGN',
+      customer: {
+        email: bookingRequest.guestDetails.email,
+        firstName: bookingRequest.guestDetails.firstName,
+        lastName: bookingRequest.guestDetails.lastName,
+        phone: bookingRequest.guestDetails.phone
+      },
+      status: conversionData.paymentDetails.paymentStatus === 'Paid' ? 'success' : 'pending',
+      type: 'booking_payment',
+      paymentMethod: conversionData.paymentDetails.paymentMethod === 'Bank Transfer' ? 'bank_transfer' : 'card',
+      bookingRequest: bookingRequest._id,
+      tenant: tenant._id,
+      metadata: {
+        propertyId: apartment._id.toString(),
+        propertyTitle: apartment.title,
+        checkInDate: bookingRequest.bookingDetails.checkInDate,
+        checkOutDate: bookingRequest.bookingDetails.checkOutDate,
+        numberOfNights: bookingRequest.bookingDetails.numberOfNights,
+        numberOfGuests: bookingRequest.bookingDetails.numberOfGuests
+      },
+      paidAt: conversionData.paymentDetails.paymentStatus === 'Paid' ? new Date() : null
+    };
+    
+    const transaction = new Transaction(transactionData);
+    await transaction.save();
+    
+    // Create admin notification for the conversion and payment
+    try {
+      await AdminNotification.createNotification({
+        title: 'Booking Converted to Tenant',
+        message: `Booking request from ${tenant.firstName} ${tenant.lastName} has been converted to tenant for ${apartment.title}`,
+        type: 'tenant_checkin',
+        priority: 'medium',
+        relatedRecords: {
+          bookingRequest: bookingRequest._id,
+          tenant: tenant._id,
+          apartment: apartment._id,
+          transaction: transaction._id
+        },
+        actionUrl: '/dashboard/tenants',
+        actionText: 'View Tenant'
+      });
+
+      // Create payment notification if payment was made
+      if (conversionData.paymentDetails.paymentStatus === 'Paid') {
+        await AdminNotification.createPaymentNotification(transaction);
+      }
+    } catch (notificationError) {
+      console.error('Error creating admin notifications:', notificationError);
+      // Don't fail the conversion if notification creation fails
+    }
+    
     return NextResponse.json({
       success: true,
       data: {
         tenant: tenant,
-        bookingRequest: bookingRequest
+        bookingRequest: bookingRequest,
+        transaction: transaction
       },
       message: 'Booking request successfully converted to tenant'
     });

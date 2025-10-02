@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import BookingRequestDetailsModal from '@/components/modals/BookingRequestDetailsModal';
-import { Clipboard, Search, Eye } from 'lucide-react';
+import { Clipboard, Search, Eye, Trash2 } from 'lucide-react';
 
 export default function BookingRequestsPage() {
   const [bookingRequests, setBookingRequests] = useState([]);
@@ -128,6 +128,32 @@ export default function BookingRequestsPage() {
   const handleConvertToTenant = (conversionData) => {
     // Refresh the list after conversion
     fetchBookingRequests();
+  };
+
+  const handleDeleteRequest = async (requestId) => {
+    if (!confirm('Are you sure you want to delete this booking request? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/booking-requests/${requestId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove the deleted request from the list
+        setBookingRequests(prev => prev.filter(req => req._id !== requestId));
+        fetchBookingRequests(); // Refresh to update counts
+        alert('Booking request deleted successfully');
+      } else {
+        alert(data.error || 'Failed to delete booking request');
+      }
+    } catch (error) {
+      console.error('Error deleting booking request:', error);
+      alert('Error deleting booking request');
+    }
   };
 
   return (
@@ -269,13 +295,22 @@ export default function BookingRequestsPage() {
                           {format(new Date(request.createdAt), 'MMM dd, yyyy')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button 
-                            onClick={() => handleViewDetails(request._id)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleViewDetails(request._id)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteRequest(request._id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete Request"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

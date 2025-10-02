@@ -77,7 +77,7 @@ export default function Dashboard() {
       </div>
 
       <div className="relative space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -102,7 +102,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <CreditCard className="h-6 w-6 text-green-600" />
@@ -114,7 +114,7 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
           
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center">
