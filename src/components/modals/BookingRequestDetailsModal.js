@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { X, User, Calendar, DollarSign, MapPin, Phone, Mail, MessageSquare, UserPlus } from 'lucide-react';
 import CustomDropdown from '@/components/ui/CustomDropdown';
@@ -31,6 +31,7 @@ export default function BookingRequestDetailsModal({
   });
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionForm, setShowRejectionForm] = useState(false);
+  const conversionFormRef = useRef(null);
 
   const idTypeOptions = [
     { value: 'National ID', label: 'National ID' },
@@ -167,8 +168,8 @@ export default function BookingRequestDetailsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm min-h-screen overflow-y-auto bg-opacity-50 flex items-center justify-center z-50 p-4 pt-30">
-      <div className="bg-white rounded-lg max-w-4xl w-full  flex flex-col">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[95vh] flex flex-col">
         {/* Header - Fixed */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900">
@@ -215,7 +216,16 @@ export default function BookingRequestDetailsModal({
                   )}
                   {bookingRequest.status === 'Approved' && (
                     <button
-                      onClick={() => setShowConversionForm(true)}
+                      onClick={() => {
+                        setShowConversionForm(true);
+                        // Scroll to conversion form after a short delay to ensure it's rendered
+                        setTimeout(() => {
+                          conversionFormRef.current?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                          });
+                        }, 100);
+                      }}
                       className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
@@ -407,7 +417,7 @@ export default function BookingRequestDetailsModal({
 
               {/* Conversion Form */}
               {showConversionForm && (
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <div ref={conversionFormRef} className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Convert to Tenant</h3>
                   <div className="space-y-4">
                     {/* Emergency Contact */}
