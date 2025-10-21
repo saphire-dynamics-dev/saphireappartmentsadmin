@@ -67,9 +67,19 @@ export default function BookingRequestDetailsModal({
       
       if (data.success) {
         setBookingRequest(data.data);
-        // Initialize security deposit with booking total amount
+        // Initialize conversion data with existing emergency contact if available
+        const hasEmergencyContact = data.data.emergencyContact?.name;
         setConversionData(prev => ({
           ...prev,
+          emergencyContact: hasEmergencyContact ? {
+            name: data.data.emergencyContact.name,
+            relationship: data.data.emergencyContact.relationship,
+            phone: data.data.emergencyContact.phone
+          } : {
+            name: '',
+            relationship: '',
+            phone: ''
+          },
           securityDeposit: data.data.bookingDetails.totalAmount
         }));
       }
@@ -332,6 +342,33 @@ export default function BookingRequestDetailsModal({
                 )}
               </div>
 
+              {/* Emergency Contact Information */}
+              {bookingRequest.emergencyContact?.name && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
+                    <Phone className="h-5 w-5 mr-2 text-purple-600" />
+                    Emergency Contact
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Name</label>
+                      <p className="mt-1 text-sm text-black">{bookingRequest.emergencyContact.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Relationship</label>
+                      <p className="mt-1 text-sm text-gray-900">{bookingRequest.emergencyContact.relationship}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                      <p className="mt-1 text-sm text-gray-900 flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-800" />
+                        {bookingRequest.emergencyContact.phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Property Information */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
@@ -423,60 +460,65 @@ export default function BookingRequestDetailsModal({
                     {/* Emergency Contact */}
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Emergency Contact</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input
-                          type="text"
-                          placeholder="Contact Name"
-                          value={conversionData.emergencyContact.name}
-                          onChange={(e) => setConversionData(prev => ({
-                            ...prev,
-                            emergencyContact: { ...prev.emergencyContact, name: e.target.value }
-                          }))}
-                          className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
-                          required
-                        />
-                        <input
-                          type="text"
-                          placeholder="Relationship"
-                          value={conversionData.emergencyContact.relationship}
-                          onChange={(e) => setConversionData(prev => ({
-                            ...prev,
-                            emergencyContact: { ...prev.emergencyContact, relationship: e.target.value }
-                          }))}
-                          className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
-                          required
-                        />
-                        <input
-                          type="tel"
-                          placeholder="Contact Phone"
-                          value={conversionData.emergencyContact.phone}
-                          onChange={(e) => setConversionData(prev => ({
-                            ...prev,
-                            emergencyContact: { ...prev.emergencyContact, phone: e.target.value }
-                          }))}
-                          className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Identification */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Identification</h4>
-                      <div className="grid grid-cols-1 gap-4">
-                        <input
-                          type="text"
-                          placeholder="National Identification Number (NIN)"
-                          value={conversionData.nin}
-                          onChange={(e) => setConversionData(prev => ({
-                            ...prev,
-                            nin: e.target.value
-                          }))}
-                          className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
-                          maxLength="11"
-                          required
-                        />
-                      </div>
+                      {bookingRequest.emergencyContact?.name ? (
+                        <div className="bg-purple-400 border border-green-200 rounded-lg p-3 mb-3">
+                          <p className="text-sm text-green-800 mb-2">
+                            <span className="font-medium">✓ Emergency contact already provided:</span>
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div>
+                              <span className="font-medium text-green-900">Name:</span> {bookingRequest.emergencyContact.name}
+                            </div>
+                            <div>
+                              <span className="font-medium text-green-900">Relationship:</span> {bookingRequest.emergencyContact.relationship}
+                            </div>
+                            <div>
+                              <span className="font-medium text-green-900">Phone:</span> {bookingRequest.emergencyContact.phone}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm text-orange-600 mb-3">
+                            No emergency contact provided. Please add emergency contact details:
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input
+                              type="text"
+                              placeholder="Contact Name *"
+                              value={conversionData.emergencyContact.name}
+                              onChange={(e) => setConversionData(prev => ({
+                                ...prev,
+                                emergencyContact: { ...prev.emergencyContact, name: e.target.value }
+                              }))}
+                              className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
+                              required
+                            />
+                            <input
+                              type="text"
+                              placeholder="Relationship *"
+                              value={conversionData.emergencyContact.relationship}
+                              onChange={(e) => setConversionData(prev => ({
+                                ...prev,
+                                emergencyContact: { ...prev.emergencyContact, relationship: e.target.value }
+                              }))}
+                              className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
+                              required
+                            />
+                            <input
+                              type="tel"
+                              placeholder="Contact Phone *"
+                              value={conversionData.emergencyContact.phone}
+                              onChange={(e) => setConversionData(prev => ({
+                                ...prev,
+                                emergencyContact: { ...prev.emergencyContact, phone: e.target.value }
+                              }))}
+                              className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-gray-400"
+                              required
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Payment Details */}

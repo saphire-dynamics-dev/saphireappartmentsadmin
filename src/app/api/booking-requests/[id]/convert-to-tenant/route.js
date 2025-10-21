@@ -54,6 +54,17 @@ export async function POST(request, { params }) {
       email: bookingRequest.guestDetails.email,
       phone: bookingRequest.guestDetails.phone,
       
+      // Use existing NIN from booking request if available, otherwise use provided NIN
+      nin: bookingRequest.guestDetails.nin || conversionData.nin,
+      
+      // Copy NIN image if it exists
+      ...(bookingRequest.guestDetails.ninImage?.url && {
+        ninImage: {
+          url: bookingRequest.guestDetails.ninImage.url,
+          publicId: bookingRequest.guestDetails.ninImage.publicId
+        }
+      }),
+      
       // Property Assignment
       apartment: bookingRequest.property,
       
@@ -75,11 +86,10 @@ export async function POST(request, { params }) {
         paymentDate: conversionData.paymentDetails.paymentStatus === 'Paid' ? new Date() : null
       },
       
-      // Emergency Contact
-      emergencyContact: conversionData.emergencyContact,
-      
-      // National Identification Number
-      nin: conversionData.nin,
+      // Emergency Contact - use existing from booking request if available, otherwise use provided
+      emergencyContact: bookingRequest.emergencyContact?.name 
+        ? bookingRequest.emergencyContact
+        : conversionData.emergencyContact,
       
       // Status
       status: 'Confirmed',

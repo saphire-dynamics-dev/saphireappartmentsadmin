@@ -55,7 +55,26 @@ const bookingRequestSchema = new mongoose.Schema({
       }
     }
   },
-  
+
+  // Emergency Contact Information
+  emergencyContact: {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    phone: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    relationship: {
+      type: String,
+      required: true,
+      trim: true
+    }
+  },
+
   // Booking Details
   bookingDetails: {
     checkInDate: {
