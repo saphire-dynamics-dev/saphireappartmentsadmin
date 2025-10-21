@@ -144,12 +144,12 @@ export async function DELETE(request, { params }) {
     }
     
     // Check if booking request can be deleted (only allow deletion of certain statuses)
-    if (bookingRequest.status === 'Converted') {
-      return NextResponse.json(
-        { success: false, error: 'Cannot delete a converted booking request' },
-        { status: 400 }
-      );
-    }
+    // if (bookingRequest.status === 'Converted') {
+    //   return NextResponse.json(
+    //     { success: false, error: 'Cannot delete a converted booking request' },
+    //     { status: 400 }
+    //   );
+    // }
     
     await BookingRequest.findByIdAndDelete(id);
     
