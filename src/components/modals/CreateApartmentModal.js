@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Building, MapPin, DollarSign, Home, FileText, Image, Phone } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Building, MapPin, DollarSign, Home, FileText, Image, Phone, CreditCard } from 'lucide-react';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 import ImageUpload from '@/components/ui/ImageUpload';
 
@@ -25,6 +25,11 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
       phone: '',
       email: '',
       whatsapp: ''
+    },
+    bankDetails: {
+      bankName: '',
+      accountNumber: '',
+      accountName: ''
     }
   });
 
@@ -34,7 +39,8 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
     { id: 3, title: 'Description', icon: FileText },
     { id: 4, title: 'Features', icon: MapPin },
     { id: 5, title: 'Images', icon: Image },
-    { id: 6, title: 'Contact', icon: Phone }
+    { id: 6, title: 'Contact', icon: Phone },
+    { id: 7, title: 'Bank Details', icon: CreditCard }
   ];
 
   const commonFeatures = [
@@ -57,6 +63,34 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
     { value: 'Rental', label: 'Rental' },
     { value: 'Sale', label: 'Sale' }
   ];
+
+  const nigerianBanks = [
+    'Access Bank',
+    'Zenith Bank',
+    'Guaranty Trust Bank (GTBank)',
+    'First Bank of Nigeria',
+    'United Bank for Africa (UBA)',
+    'Fidelity Bank',
+    'Union Bank of Nigeria',
+    'Stanbic IBTC Bank',
+    'Sterling Bank',
+    'Ecobank Nigeria',
+    'Wema Bank',
+    'Polaris Bank',
+    'Unity Bank',
+    'Keystone Bank',
+    'FCMB (First City Monument Bank)',
+    'Jaiz Bank',
+    'Heritage Bank',
+    'Providus Bank',
+    'SunTrust Bank',
+    'Titan Trust Bank'
+  ];
+
+  const bankOptions = nigerianBanks.map(bank => ({
+    value: bank,
+    label: bank
+  }));
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
@@ -179,7 +213,8 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
           title: '', location: '', price: '', bedrooms: 1, bathrooms: 1,
           area: '', type: 'Shortlet', description: '', features: [],
           images: [], amenities: [], rules: [],
-          contact: { phone: '', email: '', whatsapp: '' }
+          contact: { phone: '', email: '', whatsapp: '' },
+          bankDetails: { bankName: '', accountNumber: '', accountName: '' }
         });
         setCurrentStep(1);
       } else {
@@ -399,8 +434,102 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
           </div>
         );
 
+      case 7:
+        return (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">Bank Account Information</h4>
+              <p className="text-sm text-blue-700">
+                Please provide the bank account details where payments for this apartment will be received.
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bank Name <span className="text-red-500">*</span>
+              </label>
+              <CustomDropdown
+                options={bankOptions}
+                value={formData.bankDetails.bankName}
+                onChange={(value) => handleInputChange('bankDetails.bankName', value)}
+                placeholder="Select bank"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Account Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.bankDetails.accountNumber}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleInputChange('bankDetails.accountNumber', value);
+                }}
+                className="w-full text-gray-700 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter 10-digit account number"
+                maxLength="10"
+                pattern="\d{10}"
+              />
+              {formData.bankDetails.accountNumber && formData.bankDetails.accountNumber.length !== 10 && (
+                <p className="text-sm text-red-600 mt-1">Account number must be exactly 10 digits</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Account Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.bankDetails.accountName}
+                onChange={(e) => handleInputChange('bankDetails.accountName', e.target.value)}
+                className="w-full text-gray-700 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter account holder name"
+              />
+            </div>
+
+            {/* Bank Details Preview */}
+            {formData.bankDetails.bankName && formData.bankDetails.accountNumber && formData.bankDetails.accountName && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                <h5 className="text-sm font-medium text-gray-900 mb-2">Bank Details Summary</h5>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p><span className="font-medium">Bank:</span> {formData.bankDetails.bankName}</p>
+                  <p><span className="font-medium">Account Number:</span> {formData.bankDetails.accountNumber}</p>
+                  <p><span className="font-medium">Account Name:</span> {formData.bankDetails.accountName}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return null;
+    }
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.title && formData.location && formData.price && formData.type;
+      case 2:
+        return formData.bedrooms && formData.bathrooms && formData.area;
+      case 3:
+        return formData.description;
+      case 4:
+        return true; // Features are optional
+      case 5:
+        return true; // Images are optional
+      case 6:
+        return formData.contact.phone && formData.contact.email && formData.contact.whatsapp;
+      case 7:
+        return formData.bankDetails.bankName && 
+               formData.bankDetails.accountNumber && 
+               formData.bankDetails.accountNumber.length === 10 &&
+               formData.bankDetails.accountName;
+      default:
+        return true;
     }
   };
 
@@ -474,7 +603,8 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
           {currentStep < steps.length ? (
             <button
               onClick={nextStep}
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              disabled={!isStepValid()}
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -482,7 +612,7 @@ export default function CreateApartmentModal({ isOpen, onClose, onSuccess }) {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={loading || uploadingImages}
+              disabled={loading || uploadingImages || !isStepValid()}
               className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               {loading ? (uploadingImages ? 'Uploading Images...' : 'Creating...') : 'Create Apartment'}

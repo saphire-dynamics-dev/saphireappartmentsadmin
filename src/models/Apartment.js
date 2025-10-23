@@ -64,6 +64,30 @@ const apartmentSchema = new mongoose.Schema({
       required: true
     }
   },
+  // Bank Account Details
+  bankDetails: {
+    bankName: {
+      type: String,
+      required: true, // Restored to true after migration
+      trim: true
+    },
+    accountNumber: {
+      type: String,
+      required: true, // Restored to true after migration
+      trim: true,
+      validate: {
+        validator: function(v) {
+          return /^\d{10}$/.test(v); // Nigerian bank account numbers are 10 digits
+        },
+        message: 'Account number must be exactly 10 digits'
+      }
+    },
+    accountName: {
+      type: String,
+      required: true, // Restored to true after migration
+      trim: true
+    }
+  },
   status: {
     type: String,
     enum: ['Available', 'Occupied', 'Maintenance'],
@@ -77,5 +101,27 @@ const apartmentSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Virtual for formatted bank details display
+apartmentSchema.virtual('formattedBankDetails').get(function() {
+  if (!this.bankDetails) return '';
+  return `${this.bankDetails.bankName} - ${this.bankDetails.accountNumber} (${this.bankDetails.accountName})`;
+});
+
+// Static method to get apartments by bank
+apartmentSchema.statics.getByBank = async function(bankName) {
+  return await this.find({ 'bankDetails.bankName': bankName })
+    .sort({ 'bankDetails.accountName': 1 });
+};
+
+// Method to update bank details
+apartmentSchema.methods.updateBankDetails = function(bankName, accountNumber, accountName) {
+  this.bankDetails = {
+    bankName: bankName.trim(),
+    accountNumber: accountNumber.trim(),
+    accountName: accountName.trim()
+  };
+  return this.save();
+};
 
 export default mongoose.models.Apartment || mongoose.model('Apartment', apartmentSchema);

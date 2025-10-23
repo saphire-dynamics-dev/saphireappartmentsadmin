@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:bank-details": "node src/scripts/migrations/add-bank-details.js migrate",
+    "migrate:rollback-bank-details": "node src/scripts/migrations/add-bank-details.js rollback",
+    "migrate:validate-bank-details": "node src/scripts/migrations/add-bank-details.js validate"
   },
   "dependencies": {
     "chart.js": "^4.5.0",
