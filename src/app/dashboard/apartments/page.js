@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import CreateApartmentModal from '@/components/modals/CreateApartmentModal';
+import EditApartmentModal from '@/components/modals/EditApartmentModal';
 import ApartmentDetails from '@/components/apartments/ApartmentDetails';
 import { Building, Plus, Search, Edit, Trash2, Eye, ChevronRight } from 'lucide-react';
 import CustomDropdown from '@/components/ui/CustomDropdown';
@@ -11,7 +12,9 @@ export default function Apartments() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingApartmentId, setEditingApartmentId] = useState(null);
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
   const [selectedApartmentId, setSelectedApartmentId] = useState(null);
 
@@ -48,8 +51,8 @@ export default function Apartments() {
   };
 
   const handleEditApartment = (id) => {
-    // TODO: Implement edit functionality
-    console.log('Edit apartment:', id);
+    setEditingApartmentId(id);
+    setIsEditModalOpen(true);
   };
 
   const handleDeleteApartment = async (id) => {
@@ -118,7 +121,7 @@ export default function Apartments() {
                 <h1 className="text-2xl font-semibold text-gray-900">Apartments</h1>
               </div>
               <button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -241,9 +244,19 @@ export default function Apartments() {
       </div>
 
       <CreateApartmentModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSuccess={fetchApartments}
+      />
+
+      <EditApartmentModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingApartmentId(null);
+        }}
+        onSuccess={fetchApartments}
+        apartmentId={editingApartmentId}
       />
     </DashboardLayout>
   );

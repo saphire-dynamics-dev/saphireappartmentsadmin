@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Edit, Trash2, MapPin, Home, DollarSign, Users, Calendar, Phone, Mail, MessageCircle, Wifi, Car, Shield, Clock } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Home, DollarSign, Users, Calendar, Phone, Mail, MessageCircle, Wifi, Car, Shield, Clock, CreditCard, Building2 } from 'lucide-react';
 
 export default function ApartmentDetails({ apartmentId, onBack, onEdit, onDelete }) {
   const [apartment, setApartment] = useState(null);
@@ -34,6 +34,10 @@ export default function ApartmentDetails({ apartmentId, onBack, onEdit, onDelete
     if (window.confirm('Are you sure you want to delete this apartment? This action cannot be undone.')) {
       onDelete(apartmentId);
     }
+  };
+
+  const handleEdit = () => {
+    onEdit(apartmentId);
   };
 
   const getFeatureIcon = (feature) => {
@@ -79,7 +83,7 @@ export default function ApartmentDetails({ apartmentId, onBack, onEdit, onDelete
         
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => onEdit(apartment._id)}
+            onClick={handleEdit}
             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -316,6 +320,64 @@ export default function ApartmentDetails({ apartmentId, onBack, onEdit, onDelete
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Bank Account Details */}
+        {apartment.bankDetails && (
+          <div className="px-6 pb-8 border-t border-gray-200 pt-8 mt-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <CreditCard className="h-5 w-5 text-purple-600 mr-2" />
+              Bank Account Details
+            </h3>
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center p-4 bg-white rounded-lg shadow-sm transform hover:scale-105 transition-transform duration-300">
+                  <Building2 className="h-5 w-5 text-purple-600 mr-3" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Bank Name</div>
+                    <div className="text-sm text-gray-600 font-semibold">{apartment.bankDetails.bankName}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-4 bg-white rounded-lg shadow-sm transform hover:scale-105 transition-transform duration-300">
+                  <CreditCard className="h-5 w-5 text-purple-600 mr-3" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Account Number</div>
+                    <div className="text-sm text-gray-600 font-mono font-semibold tracking-wider">
+                      {apartment.bankDetails.accountNumber}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center p-4 bg-white rounded-lg shadow-sm transform hover:scale-105 transition-transform duration-300">
+                  <Users className="h-5 w-5 text-purple-600 mr-3" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Account Name</div>
+                    <div className="text-sm text-gray-600 font-semibold">{apartment.bankDetails.accountName}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Copy to clipboard functionality */}
+              <div className="mt-4 pt-4 border-t border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-purple-700">
+                    <span className="font-medium">Account Details:</span> Ready for payment transfers
+                  </div>
+                  <button
+                    onClick={() => {
+                      const accountDetails = `Bank: ${apartment.bankDetails.bankName}\nAccount Number: ${apartment.bankDetails.accountNumber}\nAccount Name: ${apartment.bankDetails.accountName}`;
+                      navigator.clipboard.writeText(accountDetails);
+                      alert('Bank details copied to clipboard!');
+                    }}
+                    className="text-xs px-3 py-1 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors duration-300"
+                  >
+                    Copy Details
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
