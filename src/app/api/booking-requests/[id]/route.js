@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import BookingRequest from '@/models/BookingRequest';
+import Transaction from '@/models/Transaction';
 import mongoose from 'mongoose';
 import { sendBookingStatusEmail } from '@/lib/emailService';
 
@@ -151,12 +152,37 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    await BookingRequest.findByIdAndDelete(id);
+    // Start a transaction to ensure data consistency
+    const session = await mongoose.startSession();
+    session.startTransaction();
     
-    return NextResponse.json({
-      success: true,
-      message: 'Booking request deleted successfully'
-    });
+    try {
+      // Delete related transactions first
+      const deletedTransactions = await Transaction.deleteMany(
+        { bookingRequest: id },
+        { session }
+      );
+      
+      console.log(`Deleted ${deletedTransactions.deletedCount} related transactions for booking request ${id}`);
+      
+      // Delete the booking request
+      await BookingRequest.findByIdAndDelete(id, { session });
+      
+      // Commit the transaction
+      await session.commitTransaction();
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Booking request and related transactions deleted successfully',
+        deletedTransactions: deletedTransactions.deletedCount
+      });
+    } catch (error) {
+      // Rollback the transaction on error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
     console.error('Error deleting booking request:', error);
     return NextResponse.json(

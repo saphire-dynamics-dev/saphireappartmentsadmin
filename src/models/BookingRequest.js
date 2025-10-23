@@ -325,6 +325,40 @@ bookingRequestSchema.pre('save', function(next) {
   next();
 });
 
+// Pre-remove middleware to clean up related data
+bookingRequestSchema.pre('findOneAndDelete', async function() {
+  const bookingRequestId = this.getQuery()._id;
+  
+  try {
+    // Delete related transactions
+    const Transaction = require('./Transaction').default;
+    const deletedTransactions = await Transaction.deleteMany({ 
+      bookingRequest: bookingRequestId 
+    });
+    
+    console.log(`Cleaned up ${deletedTransactions.deletedCount} transactions for booking request ${bookingRequestId}`);
+  } catch (error) {
+    console.error('Error cleaning up related data:', error);
+    // Don't throw error here to avoid blocking the deletion
+  }
+});
+
+// Alternative method for direct document deletion
+bookingRequestSchema.pre('deleteOne', { document: true, query: false }, async function() {
+  try {
+    // Delete related transactions
+    const Transaction = require('./Transaction').default;
+    const deletedTransactions = await Transaction.deleteMany({ 
+      bookingRequest: this._id 
+    });
+    
+    console.log(`Cleaned up ${deletedTransactions.deletedCount} transactions for booking request ${this._id}`);
+  } catch (error) {
+    console.error('Error cleaning up related data:', error);
+    // Don't throw error here to avoid blocking the deletion
+  }
+});
+
 // Index for better query performance
 bookingRequestSchema.index({ status: 1, createdAt: -1 });
 bookingRequestSchema.index({ property: 1, 'bookingDetails.checkInDate': 1 });

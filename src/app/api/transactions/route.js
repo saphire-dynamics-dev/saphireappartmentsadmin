@@ -52,20 +52,45 @@ export async function GET(request) {
     ]);
     
     // Get revenue summary
-    const revenueSummary = await Transaction.aggregate([
-      {
-        $match: { status: 'success' }
-      },
+    const revenuePipeline = [
       {
         $group: {
           _id: null,
           totalRevenue: { $sum: '$amount' },
+          successfulRevenue: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'success'] }, '$amount', 0]
+            }
+          },
+          pendingRevenue: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'pending'] }, '$amount', 0]
+            }
+          },
           totalTransactions: { $sum: 1 },
-          averageTransaction: { $avg: '$amount' }
+          successfulTransactions: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'success'] }, 1, 0]
+            }
+          }
         }
       }
-    ]);
+    ];
     
+    const revenueResult = await Transaction.aggregate(revenuePipeline);
+    const revenueSummary = revenueResult[0] || {
+      totalRevenue: 0,
+      successfulRevenue: 0,
+      pendingRevenue: 0,
+      totalTransactions: 0,
+      successfulTransactions: 0
+    };
+    
+    // Calculate average transaction from successful payments
+    revenueSummary.averageTransaction = revenueSummary.successfulTransactions > 0 
+      ? revenueSummary.successfulRevenue / revenueSummary.successfulTransactions 
+      : 0;
+
     return NextResponse.json({
       success: true,
       data: transactions,
@@ -80,7 +105,7 @@ export async function GET(request) {
         acc[item._id] = item.count;
         return acc;
       }, {}),
-      revenueSummary: revenueSummary[0] || { totalRevenue: 0, totalTransactions: 0, averageTransaction: 0 }
+      revenueSummary: revenueSummary
     });
   } catch (error) {
     console.error('Error fetching transactions:', error);

@@ -4,12 +4,18 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import CustomDropdown from '@/components/ui/CustomDropdown';
-import { CreditCard, Search, Eye, Download, TrendingUp, DollarSign } from 'lucide-react';
+import UpdateTransactionStatusModal from '@/components/modals/UpdateTransactionStatusModal';
+import TransactionDetailsModal from '@/components/modals/TransactionDetailsModal';
+import { CreditCard, Search, Eye, Download, TrendingUp, DollarSign, Edit } from 'lucide-react';
 
 export default function PaymentsPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
   const [filters, setFilters] = useState({
     status: 'all',
     type: 'all',
@@ -92,6 +98,25 @@ export default function PaymentsPage() {
     fetchTransactions();
   };
 
+  const handleViewDetails = (transaction) => {
+    setSelectedTransactionId(transaction._id);
+    setShowDetailsModal(true);
+  };
+
+  const handleUpdateStatus = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowUpdateModal(true);
+  };
+
+  const handleStatusUpdateSuccess = (updatedTransaction) => {
+    setTransactions(prev => 
+      prev.map(t => 
+        t._id === updatedTransaction._id ? updatedTransaction : t
+      )
+    );
+    fetchTransactions(); // Refresh to update counts and summary
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       'success': 'bg-green-100 text-green-800',
@@ -148,7 +173,7 @@ export default function PaymentsPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-sm text-gray-600">Total Expected Revenue</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {formatCurrency(revenueSummary.totalRevenue || 0)}
                 </p>
@@ -160,11 +185,16 @@ export default function PaymentsPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Successful Payments</p>
-                <p className="text-2xl font-semibold text-green-600">{statusCounts.success || 0}</p>
+                <p className="text-sm text-gray-600">Successful Revenue</p>
+                <p className="text-2xl font-semibold text-green-600">
+                  {formatCurrency(revenueSummary.successfulRevenue || 0)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {statusCounts.success || 0} payments
+                </p>
               </div>
               <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <div className="h-4 w-4 bg-green-600 rounded-full"></div>
+                <DollarSign className="h-4 w-4 text-green-600" />
               </div>
             </div>
           </div>
@@ -173,7 +203,12 @@ export default function PaymentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Pending Payments</p>
-                <p className="text-2xl font-semibold text-yellow-600">{statusCounts.pending || 0}</p>
+                <p className="text-2xl font-semibold text-yellow-600">
+                  {formatCurrency(revenueSummary.pendingRevenue || 0)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {statusCounts.pending || 0} payments
+                </p>
               </div>
               <div className="h-8 w-8 bg-yellow-100 rounded-full flex items-center justify-center">
                 <div className="h-4 w-4 bg-yellow-600 rounded-full"></div>
@@ -301,11 +336,6 @@ export default function PaymentsPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {formatCurrency(transaction.amount)}
                           </div>
-                          {transaction.fees.paystackFee > 0 && (
-                            <div className="text-xs text-gray-500">
-                              Fee: {formatCurrency(transaction.fees.paystackFee)}
-                            </div>
-                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(transaction.type)}`}>
@@ -340,12 +370,22 @@ export default function PaymentsPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button 
-                            className="text-blue-600 hover:text-blue-900"
-                            title="View Details"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleViewDetails(transaction)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateStatus(transaction)}
+                              className="text-purple-600 hover:text-purple-900"
+                              title="Update Status"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -396,6 +436,27 @@ export default function PaymentsPage() {
             </>
           )}
         </div>
+
+        {/* Transaction Details Modal */}
+        <TransactionDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedTransactionId(null);
+          }}
+          transactionId={selectedTransactionId}
+        />
+
+        {/* Update Transaction Status Modal */}
+        <UpdateTransactionStatusModal
+          isOpen={showUpdateModal}
+          onClose={() => {
+            setShowUpdateModal(false);
+            setSelectedTransaction(null);
+          }}
+          transaction={selectedTransaction}
+          onSuccess={handleStatusUpdateSuccess}
+        />
       </div>
     </DashboardLayout>
   );

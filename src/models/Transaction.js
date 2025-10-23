@@ -214,6 +214,29 @@ transactionSchema.statics.getTotalRevenue = async function(startDate, endDate) {
   return result[0] || { totalRevenue: 0, totalTransactions: 0 };
 };
 
+// Static method to delete transactions by booking request
+transactionSchema.statics.deleteByBookingRequest = async function(bookingRequestId) {
+  try {
+    const result = await this.deleteMany({ bookingRequest: bookingRequestId });
+    return {
+      success: true,
+      deletedCount: result.deletedCount
+    };
+  } catch (error) {
+    console.error('Error deleting transactions by booking request:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Static method to get transactions by booking request
+transactionSchema.statics.getByBookingRequest = async function(bookingRequestId) {
+  return await this.find({ bookingRequest: bookingRequestId })
+    .sort({ createdAt: -1 });
+};
+
 // Method to mark as successful
 transactionSchema.methods.markAsSuccessful = function(paystackData) {
   this.status = 'success';
