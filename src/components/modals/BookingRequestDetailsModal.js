@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { X, User, Calendar, DollarSign, MapPin, Phone, Mail, MessageSquare, UserPlus } from 'lucide-react';
+import { X, User, Calendar, DollarSign, MapPin, Phone, Mail, MessageSquare, UserPlus, Tag, Percent } from 'lucide-react';
 import CustomDropdown from '@/components/ui/CustomDropdown';
 
 export default function BookingRequestDetailsModal({ 
@@ -433,6 +433,140 @@ export default function BookingRequestDetailsModal({
                 </div>
               </div>
 
+              {/* Discount Code Section */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="flex items-center text-lg font-medium text-gray-900 mb-4">
+                  <Tag className="h-5 w-5 mr-2 text-purple-600" />
+                  Discount Code Information
+                </h3>
+                
+                {bookingRequest.discountCodeUsed && bookingRequest.discountCodeDetails ? (
+                  <div className="space-y-4">
+                    {/* Discount Code Used Banner */}
+                    <div className="bg-green-100 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <Tag className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-green-800">
+                            Discount Code Applied
+                          </p>
+                          <p className="text-sm text-green-700">
+                            Customer saved {formatCurrency(bookingRequest.discountCodeDetails.discountAmount || 0)} on this booking
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Discount Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Discount Code</label>
+                        <p className="mt-1 text-sm font-mono font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                          {bookingRequest.discountCodeDetails.code}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Description</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {bookingRequest.discountCodeDetails.description || 'No description'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Discount Type</label>
+                        <p className="mt-1 text-sm text-gray-900 flex items-center">
+                          {bookingRequest.discountCodeDetails.discountType === 'percentage' ? (
+                            <>
+                              <Percent className="h-4 w-4 mr-1 text-green-600" />
+                              Percentage
+                            </>
+                          ) : (
+                            <>
+                              <DollarSign className="h-4 w-4 mr-1 text-green-600" />
+                              Fixed Amount
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Discount Value</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {bookingRequest.discountCodeDetails.discountType === 'percentage' 
+                            ? `${bookingRequest.discountCodeDetails.discountValue}%`
+                            : formatCurrency(bookingRequest.discountCodeDetails.discountValue)
+                          }
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Discount Amount</label>
+                        <p className="mt-1 text-sm font-semibold text-green-600">
+                          -{formatCurrency(bookingRequest.discountCodeDetails.discountAmount || 0)}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Applied On</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {bookingRequest.discountCodeDetails.appliedAt 
+                            ? format(new Date(bookingRequest.discountCodeDetails.appliedAt), 'MMM dd, yyyy HH:mm')
+                            : 'N/A'
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Price Breakdown */}
+                    {bookingRequest.discountCodeDetails.originalAmount && (
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h4 className="font-medium text-gray-900 mb-3">Price Breakdown</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Original Amount:</span>
+                            <span className="text-gray-900">
+                              {formatCurrency(bookingRequest.discountCodeDetails.originalAmount)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-green-600">
+                            <span>Discount ({bookingRequest.discountCodeDetails.code}):</span>
+                            <span>
+                              -{formatCurrency(bookingRequest.discountCodeDetails.discountAmount || 0)}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200 pt-2 flex justify-between font-semibold">
+                            <span className="text-gray-900">Final Amount:</span>
+                            <span className="text-gray-900">
+                              {formatCurrency(bookingRequest.discountCodeDetails.finalAmount || bookingRequest.bookingDetails.totalAmount)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* No Discount Code Used */
+                  <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <Tag className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-gray-700">
+                          No Discount Code Used
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          This booking was made without applying any discount code.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Special Requests */}
               {bookingRequest.specialRequests && (
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -542,7 +676,14 @@ export default function BookingRequestDetailsModal({
                             value={conversionData.paymentDetails.paymentStatus}
                             onChange={(value) => setConversionData(prev => ({
                               ...prev,
-                              paymentDetails: { ...prev.paymentDetails, paymentStatus: value }
+                              paymentDetails: { 
+                                ...prev.paymentDetails, 
+                                paymentStatus: value,
+                                // Auto-fill amount when "Paid" is selected
+                                amountPaid: value === 'Paid' 
+                                  ? bookingRequest.bookingDetails.totalAmount 
+                                  : prev.paymentDetails.amountPaid
+                              }
                             }))}
                             placeholder="Payment Status"
                           />
@@ -602,6 +743,9 @@ export default function BookingRequestDetailsModal({
                   <p>Last updated: {format(new Date(bookingRequest.responseDate), 'MMMM dd, yyyy HH:mm')}</p>
                 )}
                 <p>Source: {bookingRequest.source || 'Website'}</p>
+                {bookingRequest.discountCodeUsed && (
+                  <p>Discount applied: {bookingRequest.discountCodeDetails?.code || 'Unknown'}</p>
+                )}
               </div>
             </div>
           ) : (

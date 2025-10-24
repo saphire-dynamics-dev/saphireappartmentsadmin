@@ -105,6 +105,20 @@ const bookingRequestSchema = new mongoose.Schema({
       type: Number,
       required: true,
       min: 0
+    },
+    baseAmount: {
+      type: Number,
+      min: 0
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    discountCode: {
+      type: String,
+      trim: true,
+      uppercase: true
     }
   },
   
@@ -151,6 +165,47 @@ const bookingRequestSchema = new mongoose.Schema({
     ref: 'Tenant'
   },
   
+  // Discount Code Tracking
+  discountCodeUsed: {
+    type: Boolean,
+    default: false
+  },
+  discountCodeDetails: {
+    code: {
+      type: String,
+      trim: true,
+      uppercase: true
+    },
+    description: {
+      type: String,
+      trim: true
+    },
+    discountType: {
+      type: String,
+      enum: ['percentage', 'fixed']
+    },
+    discountValue: {
+      type: Number,
+      min: 0
+    },
+    discountAmount: {
+      type: Number,
+      min: 0
+    },
+    originalAmount: {
+      type: Number,
+      min: 0
+    },
+    finalAmount: {
+      type: Number,
+      min: 0
+    },
+    appliedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+
   // Communication logs
   communications: [{
     date: {
@@ -199,6 +254,22 @@ bookingRequestSchema.virtual('daysUntilCheckIn').get(function() {
   return 0;
 });
 
+// Virtual for discount savings
+bookingRequestSchema.virtual('totalSavings').get(function() {
+  if (this.discountCodeUsed && this.discountCodeDetails) {
+    return this.discountCodeDetails.discountAmount || 0;
+  }
+  return 0;
+});
+
+// Virtual for discount percentage (if applicable)
+bookingRequestSchema.virtual('discountPercentage').get(function() {
+  if (this.discountCodeUsed && this.discountCodeDetails && this.discountCodeDetails.discountType === 'percentage') {
+    return this.discountCodeDetails.discountValue;
+  }
+  return 0;
+});
+
 // Static method to get pending requests count
 bookingRequestSchema.statics.getPendingCount = async function() {
   return await this.countDocuments({ status: 'Pending' });
@@ -223,6 +294,69 @@ bookingRequestSchema.statics.getRecent = async function(days = 7, limit = 20) {
     .populate('property', 'title location images')
     .sort({ createdAt: -1 })
     .limit(limit);
+};
+
+// Static method to get discount code usage statistics
+bookingRequestSchema.statics.getDiscountStats = async function(timeframe = {}) {
+  const pipeline = [];
+  
+  // Add time filter if provided
+  if (timeframe.from || timeframe.to) {
+    const matchConditions = {};
+    if (timeframe.from) matchConditions.createdAt = { $gte: new Date(timeframe.from) };
+    if (timeframe.to) matchConditions.createdAt = { ...matchConditions.createdAt, $lte: new Date(timeframe.to) };
+    pipeline.push({ $match: matchConditions });
+  }
+
+  pipeline.push({
+    $group: {
+      _id: null,
+      totalBookings: { $sum: 1 },
+      bookingsWithDiscount: { $sum: { $cond: ['$discountCodeUsed', 1, 0] } },
+      totalSavings: { $sum: { $cond: ['$discountCodeUsed', '$discountCodeDetails.discountAmount', 0] } },
+      avgDiscountAmount: { $avg: { $cond: ['$discountCodeUsed', '$discountCodeDetails.discountAmount', null] } }
+    }
+  });
+
+  const stats = await this.aggregate(pipeline);
+  return stats.length > 0 ? stats[0] : {
+    totalBookings: 0,
+    bookingsWithDiscount: 0,
+    totalSavings: 0,
+    avgDiscountAmount: 0
+  };
+};
+
+// Static method to get most used discount codes
+bookingRequestSchema.statics.getTopDiscountCodes = async function(limit = 10, timeframe = {}) {
+  const pipeline = [
+    { $match: { discountCodeUsed: true } }
+  ];
+
+  // Add time filter if provided
+  if (timeframe.from || timeframe.to) {
+    const matchConditions = {};
+    if (timeframe.from) matchConditions.createdAt = { $gte: new Date(timeframe.from) };
+    if (timeframe.to) matchConditions.createdAt = { ...matchConditions.createdAt, $lte: new Date(timeframe.to) };
+    pipeline.push({ $match: matchConditions });
+  }
+
+  pipeline.push(
+    {
+      $group: {
+        _id: '$discountCodeDetails.code',
+        usageCount: { $sum: 1 },
+        totalSavings: { $sum: '$discountCodeDetails.discountAmount' },
+        avgSavings: { $avg: '$discountCodeDetails.discountAmount' },
+        discountType: { $first: '$discountCodeDetails.discountType' },
+        discountValue: { $first: '$discountCodeDetails.discountValue' }
+      }
+    },
+    { $sort: { usageCount: -1 } },
+    { $limit: limit }
+  );
+
+  return await this.aggregate(pipeline);
 };
 
 // Method to add communication log
@@ -325,43 +459,11 @@ bookingRequestSchema.pre('save', function(next) {
   next();
 });
 
-// Pre-remove middleware to clean up related data
-bookingRequestSchema.pre('findOneAndDelete', async function() {
-  const bookingRequestId = this.getQuery()._id;
-  
-  try {
-    // Delete related transactions
-    const Transaction = require('./Transaction').default;
-    const deletedTransactions = await Transaction.deleteMany({ 
-      bookingRequest: bookingRequestId 
-    });
-    
-    console.log(`Cleaned up ${deletedTransactions.deletedCount} transactions for booking request ${bookingRequestId}`);
-  } catch (error) {
-    console.error('Error cleaning up related data:', error);
-    // Don't throw error here to avoid blocking the deletion
-  }
-});
-
-// Alternative method for direct document deletion
-bookingRequestSchema.pre('deleteOne', { document: true, query: false }, async function() {
-  try {
-    // Delete related transactions
-    const Transaction = require('./Transaction').default;
-    const deletedTransactions = await Transaction.deleteMany({ 
-      bookingRequest: this._id 
-    });
-    
-    console.log(`Cleaned up ${deletedTransactions.deletedCount} transactions for booking request ${this._id}`);
-  } catch (error) {
-    console.error('Error cleaning up related data:', error);
-    // Don't throw error here to avoid blocking the deletion
-  }
-});
-
 // Index for better query performance
 bookingRequestSchema.index({ status: 1, createdAt: -1 });
 bookingRequestSchema.index({ property: 1, 'bookingDetails.checkInDate': 1 });
 bookingRequestSchema.index({ 'guestDetails.email': 1 });
+bookingRequestSchema.index({ discountCodeUsed: 1, createdAt: -1 });
+bookingRequestSchema.index({ 'discountCodeDetails.code': 1 });
 
 export default mongoose.models.BookingRequest || mongoose.model('BookingRequest', bookingRequestSchema);
