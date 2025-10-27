@@ -231,7 +231,7 @@ export default function DiscountCodesPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {code.discountType === 'percentage' 
                     ? `${code.discountValue}%` 
-                    : `$${code.discountValue}`}
+                    : `${code.discountValue}`}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {code.currentUsageCount || 0} / {code.maxUsageCount}

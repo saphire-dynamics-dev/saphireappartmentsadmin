@@ -193,9 +193,9 @@ export default function PaymentsPage() {
                   {statusCounts.success || 0} payments
                 </p>
               </div>
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+              {/* <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
                 <DollarSign className="h-4 w-4 text-green-600" />
-              </div>
+              </div> */}
             </div>
           </div>
           
@@ -224,7 +224,6 @@ export default function PaymentsPage() {
                   {formatCurrency(revenueSummary.averageTransaction || 0)}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-purple-600" />
             </div>
           </div>
         </div>
