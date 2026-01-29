@@ -60,6 +60,7 @@ export async function POST(request) {
     await dbConnect();
     
     const body = await request.json();
+    console.log(body);
     const apartment = new Apartment(body);
     await apartment.save();
     
