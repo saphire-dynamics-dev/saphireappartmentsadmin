@@ -34,7 +34,6 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    console.log(before upload);
     // Upload to Cloudinary with proper settings
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
