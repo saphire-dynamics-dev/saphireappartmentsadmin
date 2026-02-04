@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const excludeBookingId = searchParams.get('excludeBooking');
     

@@ -9,16 +9,18 @@
     "lint": "next lint",
     "migrate:bank-details": "node src/scripts/migrations/add-bank-details.js migrate",
     "migrate:rollback-bank-details": "node src/scripts/migrations/add-bank-details.js rollback",
-    "migrate:validate-bank-details": "node src/scripts/migrations/add-bank-details.js validate"
+    "migrate:validate-bank-details": "node src/scripts/migrations/add-bank-details.js validate",
+    "seed:admin": "node src/scripts/seed-admin.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.0.1",
     "chart.js": "^4.5.0",
-    "cloudinary": "^1.41.3",
+    "cloudinary": "^2.9.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.537.0",
     "mongodb": "^6.18.0",
     "mongoose": "^8.17.1",
-    "next": "15.4.5",
+    "next": "15.5.11",
     "next-cloudinary": "^6.16.0",
     "nodemailer": "^7.0.5",
     "react": "19.1.0",

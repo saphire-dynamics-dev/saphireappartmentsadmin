@@ -1,13 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['cloudinary']
-  },
-  api: {
-    bodyParser: {
-      sizeLimit: '35mb',
-    },
-  },
+  serverExternalPackages: ['cloudinary'],
   images: {
     domains: ['res.cloudinary.com'],
     formats: ['image/webp', 'image/avif'],

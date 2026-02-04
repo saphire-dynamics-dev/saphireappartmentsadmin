@@ -7,7 +7,7 @@ export async function PUT(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params;
     const { amountPaid, paymentMethod, paymentStatus, transactionReference } = await request.json();
     
     if (!mongoose.Types.ObjectId.isValid(id)) {

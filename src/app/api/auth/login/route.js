@@ -1,15 +1,39 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import dbConnect from '@/lib/mongodb';
+import Admin from '@/models/Admin';
+import { verifyPassword } from '@/lib/password';
 
 export async function POST(request) {
   try {
     const { username, password } = await request.json();
     
-    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    if (!username || !password) {
+      return NextResponse.json({ success: false, error: 'Missing credentials' }, { status: 400 });
+    }
+
+    const normalizedUsername = String(username).trim().toLowerCase();
+
+    await dbConnect();
+    const admin = await Admin.findOne({ username: normalizedUsername }).select('+passwordHash +passwordSalt isActive username');
+
+    let isValid = false;
+    if (admin) {
+      if (!admin.isActive) {
+        return NextResponse.json({ success: false, error: 'Account disabled' }, { status: 403 });
+      }
+      isValid = verifyPassword(password, admin.passwordHash, admin.passwordSalt);
+    } else if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
+      isValid =
+        normalizedUsername === String(process.env.ADMIN_USERNAME).trim().toLowerCase() &&
+        password === process.env.ADMIN_PASSWORD;
+    }
+
+    if (isValid) {
       // Create session cookie
       const sessionData = {
         isAuthenticated: true,
-        username: username,
+        username: normalizedUsername,
         timestamp: Date.now()
       };
       
@@ -23,6 +47,11 @@ export async function POST(request) {
         maxAge: 60 * 60 * 24 // 24 hours
       });
       
+      if (admin) {
+        admin.lastLoginAt = new Date();
+        await admin.save();
+      }
+
       return response;
     }
     

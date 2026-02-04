@@ -5,7 +5,8 @@ import DiscountCode from '@/models/DiscountCode';
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const discountCode = await DiscountCode.findById(params.id);
+    const { id } = await params;
+    const discountCode = await DiscountCode.findById(id);
     
     if (!discountCode) {
       return NextResponse.json(
@@ -28,9 +29,10 @@ export async function PUT(request, { params }) {
   try {
     await dbConnect();
     const data = await request.json();
+    const { id } = await params;
     
     const discountCode = await DiscountCode.findByIdAndUpdate(
-      params.id,
+      id,
       data,
       { new: true, runValidators: true }
     );
@@ -61,7 +63,8 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();
-    const discountCode = await DiscountCode.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const discountCode = await DiscountCode.findByIdAndDelete(id);
     
     if (!discountCode) {
       return NextResponse.json(

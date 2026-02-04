@@ -11,7 +11,7 @@ export async function POST(request, { params }) {
   try {
     await dbConnect();
     
-    const { id } = params;
+    const { id } = await params;
     const conversionData = await request.json();
     
     if (!mongoose.Types.ObjectId.isValid(id)) {
