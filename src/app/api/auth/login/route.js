@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import dbConnect from '@/lib/mongodb';
 import Admin from '@/models/Admin';
 import { verifyPassword } from '@/lib/password';
+import { createAdminSession } from '@/lib/adminSession';
 
 export async function POST(request) {
   try {
@@ -31,16 +32,10 @@ export async function POST(request) {
 
     if (isValid) {
       // Create session cookie
-      const sessionData = {
-        isAuthenticated: true,
-        username: normalizedUsername,
-        timestamp: Date.now()
-      };
-      
       const response = NextResponse.json({ success: true });
       
       // Set secure HTTP-only cookie
-      response.cookies.set('admin-session', JSON.stringify(sessionData), {
+      response.cookies.set('admin-session', createAdminSession(normalizedUsername), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',

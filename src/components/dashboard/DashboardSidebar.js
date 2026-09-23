@@ -11,6 +11,7 @@ import {
   Settings,
   Clipboard,
   Ticket,
+  MessageSquare,
 } from "lucide-react";
 
 const navigation = [
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
   { name: "Discount Codes", href: "/dashboard/discount-codes", icon: Ticket },
   { name: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
+  { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquare },
   { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
   
