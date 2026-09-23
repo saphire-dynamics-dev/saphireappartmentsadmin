@@ -285,32 +285,6 @@ export const sendBookingStatusEmail = async (bookingRequest, status, rejectionRe
   }
 };
 
-export const sendFeedbackReplyEmail = async (feedback, message) => {
-  try {
-    const transporter = createTransporter();
-    const safeMessage = String(message)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-      .replace(/\n/g, '<br>');
-
-    const result = await transporter.sendMail({
-      from: `"Saphire Apartments" <${process.env.SMTP_USER}>`,
-      to: feedback.email,
-      subject: 'A response to your Saphire Apartments feedback',
-      html: `<p>Dear ${feedback.name},</p><p>${safeMessage}</p><p>Kind regards,<br>Saphire Apartments</p>`,
-      text: `Dear ${feedback.name},\n\n${message}\n\nKind regards,\nSaphire Apartments`,
-    });
-
-    return { success: true, messageId: result.messageId };
-  } catch (error) {
-    console.error('Error sending feedback reply:', error);
-    return { success: false, error: error.message };
-  }
-};
-
 // Test email connection
 export const testEmailConnection = async () => {
   try {
